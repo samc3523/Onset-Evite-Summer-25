@@ -90,13 +90,13 @@
 
 #treasure-x {
     position: absolute;
-    width: 40px;
-    height: 40px;
+    width: 80px;
+    height: 80px;
     z-index: 15;
     pointer-events: none;
     top: 700px;
     left: 500px;
-    animation: jiggle 2s infinite ease-in-out, glow 2s infinite alternate;
+    animation: jiggle 5s infinite ease-in-out, glow 10s infinite alternate;
     opacity: 0.95;
     }
 
@@ -292,7 +292,7 @@
       marker.style.left = x + 'px';
       marker.style.top = y + 'px';
 
-      const target = { x: 500, y: 700, r:50 };
+      const target = { x: 500, y: 700, r:80 };
       const dx = x - target.x;
       const dy = y - target.y;
       if (Math.sqrt(dx * dx + dy * dy) < target.r) {
