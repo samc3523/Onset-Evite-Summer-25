@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Treasure Hunt</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Trebuchet MS', sans-serif;
+      background-color: #f0f0e8;
+    }
+    #startBtn {
+      margin-top: 20px;
+      padding: 10px 18px;
+      font-size: 18px;
+      font-weight: bold;
+      background-color: #d9b310;
+      border: 2px solid #000;
+      cursor: pointer;
+      animation: glow 3s infinite alternate;
+    }
+
+    #map-container {
+      position: relative;
+      width: 768px;
+      height: 1024px;
+      margin: 0 auto;
+      border: 4px solid #222;
+      overflow: hidden;
+    }
+
+    #map-image {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #path-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 10;
+      touch-action: none; /* Prevent scrolling on mobile while drawing */
+    }
+
+    path {
+      fill: none;
+      stroke: red;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 8, 6;
+      opacity: 0.6;
+    }
+  #marker {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    pointer-events: none;
+    z-index: 20;
+    top: 500px;
+    left: 50px;
+    opacity: 1;
+    animation: ship-jiggle 2s infinite ease-in-out, glow 10s infinite alternate;
+  }
+
+#treasure-x {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    z-index: 15;
+    pointer-events: none;
+    top: 700px;
+    left: 500px;
+    animation: jiggle 2s infinite ease-in-out, glow 2s infinite alternate;
+    opacity: 0.95;
+    }
+
+@keyframes jiggle {
+  0%, 100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes glow {
+  0% {
+    filter: drop-shadow(0 0 5px yellow) drop-shadow(0 0 10px gold);
+  }
+  100% {
+    filter: drop-shadow(0 0 12px orange) drop-shadow(0 0 20px red);
+  }
+}
+
+@keyframes ship-jiggle {
+  0%, 100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+
+    #popup {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border: 3px solid black;
+      padding: 20px;
+      font-size: 18px;
+      display: none;
+      z-index: 30;
+    }
+
+    #popup button {
+      margin-top: 10px;
+      padding: 8px 14px;
+      font-size: 16px;
+    }
+
+    #intro-text {
+      position: absolute;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px 30px;
+      font-size: 24px;
+      font-weight: bold;
+      border: 3px solid #000;
+      z-index: 50;
+    }
+
+    @keyframes fadeOut {
+      0%   { opacity: 1; }
+      75%  { opacity: 1; }
+      100% { opacity: 0; display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="map-container">
+  <div id="intro-text">
+    🦜 Help Captain John Complete His Onset Treasure Map By Drawing a Line to The ❌
+    <br /><br />
+    <button id="startBtn">Start Adventure</button>
+  </div>
+  
+  <!-- Audio -->
+  <audio id="bg-music" src="pirate.mp3" loop autoplay></audio>
+
+  <img id="map-image" src="Onset.png" alt="Treasure Map" />
+  <svg id="path-overlay" width="768" height="1024"></svg>
+
+  <!-- Marker and treasure -->
+  <img id="marker" src="ship.png" alt="Ship Marker" />
+  <img id="treasure-x" src="x.png" alt="Treasure X" />
+
+  <!-- Popup -->
+  <div id="popup">
+    <p> You ARRRRR invited to Onset Weekend 25' 🏝️</p>
+    <button id="goBtn">Go Now</button>
+  </div>
+</div>
+
+<script>
+  const svg = document.getElementById('path-overlay');
+  const marker = document.getElementById('marker');
+  const popup = document.getElementById('popup');
+  const goBtn = document.getElementById('goBtn');
+  const bgMusic = document.getElementById('bg-music');
+  const startBtn = document.getElementById('startBtn');
+  const introText = document.getElementById('intro-text');
+
+  let isDrawing = false;
+  let pathElement;
+  let points = [];
+
+  // Touch + mouse support
+  function getPos(e) {
+    const rect = svg.getBoundingClientRect();
+    if (e.touches && e.touches[0]) {
+      return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top
+      };
+    } else {
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    isDrawing = true;
+    points = [];
+    const { x, y } = getPos(e);
+    points.push([x, y]);
+    pathElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathElement.setAttribute("stroke", "red");
+    pathElement.setAttribute("stroke-width", 3);
+    pathElement.setAttribute("fill", "none");
+    pathElement.setAttribute("stroke-dasharray", "8,6");
+    pathElement.setAttribute("opacity", "0.6");
+    svg.appendChild(pathElement);
+  }
+
+  function drawMove(e) {
+    if (!isDrawing) return;
+    const { x, y } = getPos(e);
+    points.push([x, y]);
+    pathElement.setAttribute("d", generatePath(points));
+  }
+
+  function endDraw() {
+    isDrawing = false;
+    animateMarker(points);
+  }
+
+  svg.addEventListener('mousedown', startDraw);
+  svg.addEventListener('mousemove', drawMove);
+  svg.addEventListener('mouseup', endDraw);
+
+  svg.addEventListener('touchstart', startDraw);
+  svg.addEventListener('touchmove', drawMove);
+  svg.addEventListener('touchend', endDraw);
+
+  goBtn.addEventListener('click', () => {
+    window.location.href = "https://partiful.com/e/i87FBh61ROSpzPy7mf2t"; // Replace with your destination
+  });
+
+    startBtn.addEventListener('click', () => {
+    bgMusic.play();
+    introText.style.display = 'none';
+  });
+
+  function generatePath(pts) {
+    if (pts.length < 2) return '';
+    return pts.map((pt, i) => (i === 0 ? 'M' : 'L') + pt[0] + ' ' + pt[1]).join(' ');
+  }
+
+  function animateMarker(pathPoints) {
+  if (!pathPoints.length) return;
+
+  let i = 0;
+  const speed = 5;
+
+  const interval = setInterval(() => {
+    if (i >= pathPoints.length) {
+      clearInterval(interval);
+      return;
+    }
+
+    const [x, y] = pathPoints[i];
+    marker.style.left = x + 'px';
+    marker.style.top = y + 'px';
+
+    const target = { x: 500, y: 700, r: 25 };
+    const dx = x - target.x;
+    const dy = y - target.y;
+    if (Math.sqrt(dx * dx + dy * dy) < target.r) {
+      clearInterval(interval);
+      popup.style.display = 'block';
+    }
+
+    i++;
+  }, speed);
+}
+</script>
+
+</body>
+</html>
+
