@@ -2,14 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Title -->
   <title>Treasure Hunt</title>
+
+  <!-- Pirate Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Pirata+One&display=swap" rel="stylesheet">
+
+  <!-- Apple-specific meta tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Treasure Hunt">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png"> <!-- replace with your actual icon path -->
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png"> <!-- replace with your actual favicon -->
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="shortcut icon" href="favicon.ico">
+
+  <!-- Social Sharing (Open Graph) -->
+  <meta property="og:title" content="Treasure Hunt" />
+  <meta property="og:description" content="🦜 Help Captain John complete his treasure map and uncover the secret of Onset!" />
+  <meta property="og:image" content="share-image.jpg" /> <!-- Replace with your social preview image -->
+  <meta property="og:url" content="https://your-site.com" />
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#d9b310">
   <style>
     body {
       margin: 0;
-      font-family: 'Trebuchet MS', sans-serif;
+      font-family: 'Pirata One', cursive;
       background-color: #f0f0e8;
     }
-    #startBtn {
+    button {
       margin-top: 20px;
       padding: 10px 18px;
       font-size: 18px;
@@ -165,7 +192,7 @@
   <!-- Popup -->
   <div id="popup">
     <p> You ARRRRR invited to Onset Weekend 25' 🏝️</p>
-    <button id="goBtn">Go Now</button>
+    <button id="goBtn" class="startBtn">Go Now</button>
   </div>
 </div>
 
@@ -179,10 +206,10 @@
   const introText = document.getElementById('intro-text');
 
   let isDrawing = false;
+  let gameStarted = false; // <-- Game starts frozen
   let pathElement;
   let points = [];
 
-  // Touch + mouse support
   function getPos(e) {
     const rect = svg.getBoundingClientRect();
     if (e.touches && e.touches[0]) {
@@ -199,6 +226,7 @@
   }
 
   function startDraw(e) {
+    if (!gameStarted) return; // Block drawing before game starts
     e.preventDefault();
     isDrawing = true;
     points = [];
@@ -214,13 +242,14 @@
   }
 
   function drawMove(e) {
-    if (!isDrawing) return;
+    if (!gameStarted || !isDrawing) return;
     const { x, y } = getPos(e);
     points.push([x, y]);
     pathElement.setAttribute("d", generatePath(points));
   }
 
   function endDraw() {
+    if (!gameStarted) return;
     isDrawing = false;
     animateMarker(points);
   }
@@ -233,13 +262,14 @@
   svg.addEventListener('touchmove', drawMove);
   svg.addEventListener('touchend', endDraw);
 
-  goBtn.addEventListener('click', () => {
-    window.location.href = "https://partiful.com/e/i87FBh61ROSpzPy7mf2t"; // Replace with your destination
-  });
-
-    startBtn.addEventListener('click', () => {
+  startBtn.addEventListener('click', () => {
     bgMusic.play();
     introText.style.display = 'none';
+    gameStarted = true; // Unfreeze game
+  });
+
+  goBtn.addEventListener('click', () => {
+    window.location.href = "https://partiful.com/e/i87FBh61ROSpzPy7mf2t";
   });
 
   function generatePath(pts) {
@@ -248,34 +278,34 @@
   }
 
   function animateMarker(pathPoints) {
-  if (!pathPoints.length) return;
+    if (!pathPoints.length) return;
 
-  let i = 0;
-  const speed = 5;
+    let i = 0;
+    const speed = 50;
 
-  const interval = setInterval(() => {
-    if (i >= pathPoints.length) {
-      clearInterval(interval);
-      return;
-    }
+    const interval = setInterval(() => {
+      if (i >= pathPoints.length) {
+        clearInterval(interval);
+        return;
+      }
 
-    const [x, y] = pathPoints[i];
-    marker.style.left = x + 'px';
-    marker.style.top = y + 'px';
+      const [x, y] = pathPoints[i];
+      marker.style.left = x + 'px';
+      marker.style.top = y + 'px';
 
-    const target = { x: 500, y: 700, r: 25 };
-    const dx = x - target.x;
-    const dy = y - target.y;
-    if (Math.sqrt(dx * dx + dy * dy) < target.r) {
-      clearInterval(interval);
-      popup.style.display = 'block';
-    }
+      const target = { x: 500, y: 700, r: 25 };
+      const dx = x - target.x;
+      const dy = y - target.y;
+      if (Math.sqrt(dx * dx + dy * dy) < target.r) {
+        clearInterval(interval);
+        popup.style.display = 'block';
+      }
 
-    i++;
-  }, speed);
-}
+      i++;
+    }, speed);
+  }
 </script>
+
 
 </body>
 </html>
-
